@@ -249,7 +249,7 @@ class VMCollector:
                 if hasattr(ip_stack, "dnsConfig") and ip_stack.dnsConfig:
                     if hasattr(ip_stack.dnsConfig, "domainName") and ip_stack.dnsConfig.domainName:
                         if hasattr(vm.guest, "hostName") and vm.guest.hostName:
-                            properties["DNS Name"] = f"{vm.guest.hostName}.{ip_stack.dnsConfig.domainName}"
+                            properties["DNS Name"] = f"{vm.guest.hostName}.{ip_stack.dnsConfig.domainName}".rstrip('.')
                             return
         
         # Fallback if we couldn't get FQDN from ipStack
@@ -257,12 +257,12 @@ class VMCollector:
             hostname = vm.guest.hostName
             # Check if hostname already contains domain parts (has dots)
             if "." in hostname:
-                properties["DNS Name"] = hostname
+                properties["DNS Name"] = hostname.rstrip('.')
             elif hasattr(vm.guest, "domainName") and vm.guest.domainName:
-                properties["DNS Name"] = f"{hostname}.{vm.guest.domainName}"
+                properties["DNS Name"] = f"{hostname}.{vm.guest.domainName}".rstrip('.')
             else:
-                # Use VM name + default domain as last resort
-                properties["DNS Name"] = f"{vm.name}.local"
+                # Use just the hostname without adding a default domain
+                properties["DNS Name"] = hostname.rstrip('.')
     
     def _set_disk_info(self, vm, properties):
         """Set disk information for VM properties."""
