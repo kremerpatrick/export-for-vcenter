@@ -26,8 +26,12 @@ class VMCollector:
         self.container = container
         self.seen_uuids = set()
         self.duplicate_uuids = {}
-        self.vm_skip_list = self._load_vm_skip_list("vm-skip-list.txt")
         self.dvs_uuid_to_name = self._build_dvs_mapping()
+
+        script_dir = os.path.dirname(__file__)  # Gets the collectors/ directory
+        parent_dir = os.path.dirname(script_dir)  # Gets the src/ directory
+        self.vm_skip_list = self._load_vm_skip_list(os.path.join(parent_dir, "vm-skip-list.txt"))
+        self.vm_include_only_list = self._load_vm_skip_list(os.path.join(parent_dir, "vm-include-only-list.txt"))
     
     def _load_vm_skip_list(self, filename):
         """
@@ -83,6 +87,7 @@ class VMCollector:
         Returns:
             bool: True if VM should be skipped
         """
+        # First check the skip list
         for pattern in self.vm_skip_list:
             # Check if pattern contains any regex special characters
             if any(c in pattern for c in '*?[](){}|^$+\\'):
@@ -101,8 +106,34 @@ class VMCollector:
                 if vm.name == pattern:
                     print(f"Skipping VM {vm.name} (exact match)")
                     return True
-        return False
-    
+
+        # Check if there are any entries in vm-include-only-list
+        if not self.vm_include_only_list:
+            return False
+
+        # Loop through every entry in the include file
+        for pattern in self.vm_include_only_list:
+            # Use the same comparison logic but reverse the meaning
+            if any(c in pattern for c in '*?[](){}|^$+\\'):
+                try:
+                    # Use regex matching with proper escaping
+                    if re.search(re.escape(pattern).replace('\\*', '.*'), vm.name):
+                        # If there is a regex match, return False (don't skip)
+                        return False
+                except re.error:
+                    # Fall back to simple wildcard matching if regex fails
+                    if pattern.replace("*", "") in vm.name:
+                        # If there is a match, return False (don't skip)
+                        return False
+            else:
+                # Use exact matching for entries without regex characters
+                if vm.name == pattern:
+                    # If there is a match, return False (don't skip)
+                    return False
+
+        # If no match was found in include list, return True (skip the VM)
+        return True
+
     def _is_duplicate_uuid(self, vm_properties):
         """
         Check if VM has a duplicate UUID and track it.

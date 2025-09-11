@@ -81,6 +81,12 @@ This script automatically skips the following objects:
 
 The text file `vm-skip-list.txt` contains a list of VMs - if entries here match a VM name, that VM will be skipped and will not appear in the export. The list accepts regular expressions.  You can add your own custom expressions to skip additional VMs if you choose. 
 
+### Configuring the include only list
+
+By default, `vm-include-only-list.txt` has no entries in it, only comments, and it has no effect on the script. When you populate it with any VM name or regular expression, the script changes to include only mode. The only VMs that will be included in the output are matches on `vm-include-only-list.txt`. 
+
+The skip list is evaluated first. If a VM is listed in the skip list, it is automatically skipped. Then it is evaluated against the include list.
+
 ## Running the script
 
 ### Configure environment variables

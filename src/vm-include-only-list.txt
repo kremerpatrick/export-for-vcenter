@@ -1,0 +1,4 @@
+# VM Include Only List
+# This file is empty by default
+# The script will always skip VMs that are found in vm-skip-list. If the VM is not in the skip list, this file is checked
+# If any regex patterns are added to this file, the program will ONLY include VMs that match below, and skip all other VMs

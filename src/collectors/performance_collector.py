@@ -8,6 +8,7 @@ import datetime
 import statistics
 from pyVmomi import vim
 
+from .vm_collector import VMCollector
 
 class PerformanceCollector:
     """
@@ -31,6 +32,7 @@ class PerformanceCollector:
         self.counters_initialized = False
         # Dictionary to store all performance counters
         self.perf_counters = {}
+       
         
     def _initialize_counters(self):
         """
@@ -274,18 +276,27 @@ class PerformanceCollector:
         # Get all VMs
         all_vms = list(container_view.view)
         
+        # Create a VMCollector instance to reuse its skip logic
+        vm_collector = VMCollector(self.si, content, container)
+
         # Filter for powered on VMs
         powered_on_vms = [vm for vm in all_vms if vm.runtime.powerState == 'poweredOn']
+
+        # Filter VMs using the same logic as VMCollector
+        filtered_vms = []
+        for vm in powered_on_vms:
+            if not vm_collector._should_skip_vm(vm):
+                filtered_vms.append(vm)        
         
         # Process VMs in batches to avoid overwhelming vCenter
         batch_size = 10
-        for i in range(0, len(powered_on_vms), batch_size):
-            batch = powered_on_vms[i:i+batch_size]
-            print(f"Processing batch {i//batch_size + 1}/{(len(powered_on_vms) + batch_size - 1)//batch_size} ({len(batch)} VMs)")
+        for i in range(0, len(filtered_vms), batch_size):
+            batch = filtered_vms[i:i+batch_size]
+            print(f"Processing batch {i//batch_size + 1}/{(len(filtered_vms) + batch_size - 1)//batch_size} ({len(batch)} VMs)")
             
             processing_vm = i+1
             for vm in batch:
-                print(f"Processing VM {processing_vm} of {len(powered_on_vms)}: {vm.name}")
+                print(f"Processing VM {processing_vm} of {len(filtered_vms)}: {vm.name}")
                 metrics = self.collect_detailed_vm_metrics(vm, interval_mins, samples, interval_id)
                 performance_metric = {
                     'VM Name': vm.name,
