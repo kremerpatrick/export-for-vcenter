@@ -299,6 +299,98 @@ class TestVMCollector:
         vm_collector._set_dns_name(mock_vm, properties)
         assert properties["DNS Name"] == "test-vm.local.domain"
     
+    def test_set_dns_name_strips_trailing_periods(self, vm_collector):
+        """Test DNS name setting strips single and multiple trailing periods"""
+        mock_vm = Mock()
+        mock_vm.name = "test-vm"
+
+        # Test case 1: Single trailing period from ipStack
+        properties1 = {}
+        mock_ip_stack = Mock()
+        mock_dns_config = Mock()
+        mock_dns_config.domainName = "example.com."  # Single trailing period
+        mock_ip_stack.dnsConfig = mock_dns_config
+
+        mock_guest1 = Mock()
+        mock_guest1.hostName = "test-vm"
+        mock_guest1.ipStack = [mock_ip_stack]
+        mock_vm.guest = mock_guest1
+
+        vm_collector._set_dns_name(mock_vm, properties1)
+        assert properties1["DNS Name"] == "test-vm.example.com"
+
+        # Test case 2: Multiple trailing periods from ipStack
+        properties2 = {}
+        mock_dns_config.domainName = "example.com.."  # Multiple trailing periods
+        vm_collector._set_dns_name(mock_vm, properties2)
+        assert properties2["DNS Name"] == "test-vm.example.com"
+
+        # Test case 3: Single trailing period from hostname with dots
+        properties3 = {}
+        mock_guest3 = Mock()
+        mock_guest3.hostName = "test-vm.example.com."  # Single trailing period
+        mock_guest3.ipStack = []
+        mock_vm.guest = mock_guest3
+
+        vm_collector._set_dns_name(mock_vm, properties3)
+        assert properties3["DNS Name"] == "test-vm.example.com"
+
+        # Test case 4: Multiple trailing periods from hostname with dots
+        properties4 = {}
+        mock_guest4 = Mock()
+        mock_guest4.hostName = "test-vm.example.com..."  # Multiple trailing periods
+        mock_guest4.ipStack = []
+        mock_vm.guest = mock_guest4
+
+        vm_collector._set_dns_name(mock_vm, properties4)
+        assert properties4["DNS Name"] == "test-vm.example.com"
+
+        # Test case 5: Single trailing period from hostname + domainName
+        properties5 = {}
+        mock_guest5 = Mock()
+        mock_guest5.hostName = "test-vm"
+        mock_guest5.domainName = "example.com."  # Single trailing period
+        mock_guest5.ipStack = []
+        mock_vm.guest = mock_guest5
+
+        vm_collector._set_dns_name(mock_vm, properties5)
+        assert properties5["DNS Name"] == "test-vm.example.com"
+
+        # Test case 6: Multiple trailing periods from hostname + domainName
+        properties6 = {}
+        mock_guest6 = Mock()
+        mock_guest6.hostName = "test-vm"
+        mock_guest6.domainName = "example.com.."  # Multiple trailing periods
+        mock_guest6.ipStack = []
+        mock_vm.guest = mock_guest6
+
+        vm_collector._set_dns_name(mock_vm, properties6)
+        assert properties6["DNS Name"] == "test-vm.example.com"
+
+        # Test case 7: Single trailing period from hostname only (fallback case)
+        properties7 = {}
+        mock_guest7 = Mock()
+        mock_guest7.hostName = "test-vm."  # Single trailing period
+        mock_guest7.ipStack = []
+        # No domainName attribute to trigger the else case
+        delattr(mock_guest7, 'domainName') if hasattr(mock_guest7, 'domainName') else None
+        mock_vm.guest = mock_guest7
+
+        vm_collector._set_dns_name(mock_vm, properties7)
+        assert properties7["DNS Name"] == "test-vm"
+
+        # Test case 8: Multiple trailing periods from hostname only (fallback case)
+        properties8 = {}
+        mock_guest8 = Mock()
+        mock_guest8.hostName = "test-vm..."  # Multiple trailing periods
+        mock_guest8.ipStack = []
+        # No domainName attribute to trigger the else case
+        delattr(mock_guest8, 'domainName') if hasattr(mock_guest8, 'domainName') else None
+        mock_vm.guest = mock_guest8
+
+        vm_collector._set_dns_name(mock_vm, properties8)
+        assert properties8["DNS Name"] == "test-vm"
+
     def test_set_disk_info(self, vm_collector):
         """Test disk information extraction"""
         mock_vm = Mock()

@@ -110,7 +110,7 @@ class VCenterOrchestrator:
             else:
                 vms_to_process = all_vms
                 total_vms = len(all_vms)
-                print(f"Found {len(all_vms)} VMs, processing all")
+                print(f"Found {len(all_vms)} VMs.")
             
             # Process VMs
             for i, vm in enumerate(vms_to_process):
