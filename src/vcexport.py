@@ -66,6 +66,13 @@ python src/vcexport.py --no-statistics         # Skip performance collection
         help="Keep individual CSV files after creating zip archive"
     )
     
+    parser.add_argument(
+        "--anonymize",
+        action="store_true",
+        default=False,
+        help="Enable anonymous mode to anonymize sensitive data in the export"
+    )
+    
     args = parser.parse_args()
     
     # Get vCenter details from environment variables
@@ -84,7 +91,8 @@ python src/vcexport.py --no-statistics         # Skip performance collection
         host=vcenter_host,
         user=vcenter_user,
         password=vcenter_password,
-        disable_ssl_verification=disable_ssl_verification
+        disable_ssl_verification=disable_ssl_verification,
+        anonymize=args.anonymize
     )
     
     try:
@@ -95,6 +103,8 @@ python src/vcexport.py --no-statistics         # Skip performance collection
         
         # Export data
         print("Starting export process, this will take some time...")
+        if args.anonymize:
+            print("Anonymous mode enabled - sensitive data will be anonymized")
         zip_file = orchestrator.export_data(
             max_count=args.max_count,
             purge_csv=args.purge_csv,

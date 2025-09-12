@@ -13,7 +13,7 @@ class VCenterOrchestrator:
     Main class to orchestrate vCenter data collection and export.
     """
     
-    def __init__(self, host, user, password, port=443, disable_ssl_verification=False):
+    def __init__(self, host, user, password, port=443, disable_ssl_verification=False, anonymize=False):
         """
         Initialize the vCenter exporter.
         
@@ -23,11 +23,13 @@ class VCenterOrchestrator:
             password (str): The password to authenticate with
             port (int): The port to connect on (default: 443)
             disable_ssl_verification (bool): Whether to disable SSL certificate verification
+            anonymize (bool): Whether to anonymize sensitive data in the export
         """
         self.connection = VCenterConnection(host, user, password, port, disable_ssl_verification)
         self.service_instance = None
         self.content = None
         self.container = None
+        self.anonymize = anonymize
         
         # Collectors
         self.vm_collector = None
